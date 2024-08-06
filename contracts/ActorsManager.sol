@@ -9,7 +9,11 @@ import { Errors } from "./Errors.sol";
 import { FunctionsClient } from "@chainlink/contracts@1.2.0/src/v0.8/functions/v1_0_0/FunctionsClient.sol";
 import { FunctionsRequest } from "@chainlink/contracts@1.2.0/src/v0.8/functions/v1_0_0/libraries/FunctionsRequest.sol";
 
-/// @custom:security-contact @captainunknown7@gmail.com
+/**
+* @title Actors Manager.
+* @dev Aggregates the collections for all actor types & performs the necessary validation.
+* @custom:security-contact @captainunknown7@gmail.com
+*/
 contract ActorsManager is FunctionsClient {
     using FunctionsRequest for FunctionsRequest.Request;
     AccessManager public acl;
@@ -41,6 +45,7 @@ contract ActorsManager is FunctionsClient {
         string hash;
     }
     mapping(bytes32 => RequestInfo) private lastValidationRequest;
+
     string validationSource =
         "const actorType = args[0];"
         "const hash = args[1];"
@@ -64,6 +69,10 @@ contract ActorsManager is FunctionsClient {
         _;
     }
 
+    /**
+    * @dev Sets the ACL and determines the hash AUTHORIZED_CONTRACT_ROLE.
+    * Along with the Chainlink Configuration.
+    */
     constructor(address aclAddress, bytes32 _donId, address _donRouter, uint64 _donSubscriptionId)
         FunctionsClient(_donRouter)
     {
@@ -82,6 +91,12 @@ contract ActorsManager is FunctionsClient {
         AUTHORIZED_CONTRACT_ROLE = acl.AUTHORIZED_CONTRACT_ROLE();
     }
 
+    /**
+    * @dev Creates the batch & updates the on-chain state if the metadata validation succeeds.
+    * @param The type of the actor to register.
+    * @param The account to receive the identification NFT.
+    * @param The hash of the metadata of the actor.
+    */
     function registerActor(uint8 actorType, address account, string calldata hash)
         public
         onlyValidActorType(actorType)
@@ -96,6 +111,13 @@ contract ActorsManager is FunctionsClient {
         });
     }
 
+    /**
+    * @dev Updates the metadata of the actor if the metadata validation succeeds.
+    * @param The actor type.
+    * @param The actor ID to replace the hash of.
+    * @param The hash of the actor.
+    * @param Callback selector, which calls a post validation function in SupplyChain to perform update.
+    */
     function updateActor(uint8 actorType, uint256 actorId, string calldata hash)
         public
         onlyValidActorType(actorType)
@@ -110,6 +132,12 @@ contract ActorsManager is FunctionsClient {
         });
     }
 
+    /**
+    * @dev To retrieve the actor URI.
+    * @param The type of the actor.
+    * @param The ID of the actor.
+    * @return The hash of the batch.
+    */
     function getActorURI(uint8 actorType, uint256 actorId)
         public
         view
@@ -119,6 +147,13 @@ contract ActorsManager is FunctionsClient {
         return actors[actorType].tokenURI(actorId);
     }
 
+    /**
+    * @dev To retrieve the batch URIs in a chunk, chunk size cannot exceed 100.
+    * @param The type of the actor.
+    * @param The starting index (ID) of the actors.
+    * @param Total request size.
+    * @return The hashes of the actors.
+    */
     function getActorsURIsInBatch(uint8 actorType, uint256 cursor, uint256 pageSize)
         public
         view
@@ -141,7 +176,11 @@ contract ActorsManager is FunctionsClient {
         return actorURIs;
     }
 
-    // Chainlink Metadata Validation Function
+    /**
+    * @dev An internal function to be called to send a validation request.
+    * @param The hash of the metadata to be validated.
+    * @return The DON Function request ID.
+    */
     function validateMetadata(uint8 actorType, string calldata hash) internal returns(bytes32) {
         FunctionsRequest.Request memory req;
         req.initializeRequestForInlineJavaScript(validationSource);
@@ -157,10 +196,16 @@ contract ActorsManager is FunctionsClient {
         );
     }
 
+    /**
+    * @dev An internal function to be called by the donRouter.
+    * @param The validation request ID.
+    * @param The response from the DON Function.
+    * @return The error from the DON Function (if any).
+    */
     function fulfillRequest(bytes32 requestId, bytes memory response, bytes memory err) internal override {
-        // TODO: Request Id Check
-        // if (s_lastRequestId != requestId) revert UnexpectedRequestID(requestId);
         RequestInfo memory info = lastValidationRequest[requestId];
+        if (bytes(info.hash).length == 0) revert Errors.UnexpectedRequestID(requestId);
+
         uint256 actorId = info.actorId;
         uint8 actorType = uint8(info.actorType);
         string memory hash = info.hash;

@@ -21,9 +21,6 @@ contract AccessManager is AccessControl, AccessControlEnumerable {
     event CompanyUserRoleGranted(address indexed companyUser, uint256 timestamp);
     event CompanyUserRoleRevoked(address indexed companyUser, uint256 timestamp);
 
-    /**
-     * @notice To check if the party is TODO documentation
-     */
     modifier onlyClearanceLevelA() {
         if (!(hasRole(ADMIN_ROLE, msg.sender) || hasRole(DEFAULT_ADMIN_ROLE, msg.sender)))
             revert Errors.UnAuthorized("ADMIN_ROLE");

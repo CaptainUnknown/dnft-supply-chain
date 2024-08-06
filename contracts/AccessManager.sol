@@ -22,78 +22,124 @@ contract AccessManager is AccessControl, AccessControlEnumerable {
     event CompanyUserRoleRevoked(address indexed companyUser, uint256 timestamp);
 
     /**
-     * @notice To check if the party is TODO documentation
-     */
+    * @dev Throws `UnAuthorized` if called by any account other than the Admin or Default (Super) Admin.
+    */
     modifier onlyClearanceLevelA() {
         if (!(hasRole(ADMIN_ROLE, msg.sender) || hasRole(DEFAULT_ADMIN_ROLE, msg.sender)))
             revert Errors.UnAuthorized("ADMIN_ROLE");
         _;
     }
 
+    /**
+    * @dev Throws `UnAuthorized` if called by any account other than company user, Admin or Default (Super) Admin.
+    */
     modifier onlyClearanceLevelB() {
         if (!(hasRole(COMPANY_USER_ROLE, msg.sender) || hasRole(ADMIN_ROLE, msg.sender) || hasRole(DEFAULT_ADMIN_ROLE, msg.sender)))
             revert Errors.UnAuthorized("COMPANY_USER_ROLE");
         _;
     }
 
+    /**
+    * @dev Sets the Default (Super) Admin.
+    */
     constructor(address defaultAdmin) {
         _grantRole(DEFAULT_ADMIN_ROLE, defaultAdmin);
     }
 
     /// Authorized Contract Role
+    /**
+    * @dev grants the AUTHORIZED_CONTRACT_ROLE to the provided address.
+    * Necessary for all guarded external calls in between contracts.
+    */
     function grantAuthorizedContractRole(address contractAddress) public onlyClearanceLevelA {
         _grantRole(AUTHORIZED_CONTRACT_ROLE, contractAddress);
         emit AuthorizedContractRoleGranted(contractAddress, block.timestamp);
     }
 
+    /**
+    * @dev revokes the AUTHORIZED_CONTRACT_ROLE from the provided address.
+    */
     function revokeAuthorizedContractRole(address contractAddress) public onlyClearanceLevelA {
         _revokeRole(AUTHORIZED_CONTRACT_ROLE, contractAddress);
         emit AuthorizedContractRoleRevoked(contractAddress, block.timestamp);
     }
 
     /// Admin Role
+    /**
+    * @dev grants the ADMIN_ROLE to the provided address.
+    * Admins can only be appointed by the Default (Super) Admin.
+    */
     function grantAdminRole(address account) public onlyRole(DEFAULT_ADMIN_ROLE) {
         _grantRole(ADMIN_ROLE, account);
         emit AdminRoleGranted(account, block.timestamp);
     }
 
+    /**
+    * @dev revokes the ADMIN_ROLE from the provided address.
+    */
     function revokeAdminRole(address account) public onlyRole(DEFAULT_ADMIN_ROLE) {
         _revokeRole(ADMIN_ROLE, account);
         emit AdminRoleRevoked(account, block.timestamp);
     }
 
     /// Company User Role
+    /**
+    * @dev grants the COMPANY_USER_ROLE to the provided address.
+    * Company User can only be appointed by the by actors of clearance level A.
+    * Company User can perform management ops ('with write access' as specified in the specs).
+    */
     function grantCompanyUserRole(address account) public onlyClearanceLevelA {
         _grantRole(COMPANY_USER_ROLE, account);
         emit CompanyUserRoleGranted(account, block.timestamp);
     }
 
+    /**
+    * @dev revokes the COMPANY_USER_ROLE from the provided address.
+    */
     function revokeCompanyUserRole(address account) public onlyClearanceLevelA {
         _revokeRole(COMPANY_USER_ROLE, account);
         emit CompanyUserRoleRevoked(account, block.timestamp);
     }
 
     /// Consumer Role
+    /**
+    * @dev grants the CONSUMER_ROLE to the provided address.
+    * Consumers gain read-only access, this role can be utilized in a permissioned chain.
+    */
     function grantConsumerRole(address account) public onlyClearanceLevelB {
         _grantRole(CONSUMER_ROLE, account);
     }
 
+    /**
+    * @dev revokes the CONSUMER_ROLE from the provided address.
+    */
     function revokeConsumerRole(address account) public onlyClearanceLevelB {
         _revokeRole(CONSUMER_ROLE, account);
     }
 
     /// Super User | Default Admin role
+    /**
+    * @dev grants the DEFAULT_ADMIN_ROLE to the provided account.
+    * This is an irreversible step unless the given account agrees to transfer back the role.
+    */
     function transferDefaultAdminRole(address account) public onlyRole(DEFAULT_ADMIN_ROLE) {
         _revokeRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(DEFAULT_ADMIN_ROLE, account);
         emit DefaultAdminRoleTransferred(account, msg.sender, block.timestamp);
     }
 
+    /**
+    * @dev To retrieve the current Default (Super) Admin.
+    * @return The address with the DEFAULT_ADMIN_ROLE.
+    */
     function getCurrentDefaultAdmin() public view returns (address) {
         return getRoleMember(DEFAULT_ADMIN_ROLE, 0);
     }
 
-    // Get All Authorized Contracts
+    /**
+    * @dev To get All Authorized Contracts.
+    * @return The addresses with the AUTHORIZED_CONTRACT_ROLE.
+    */
     function getCurrentContracts() public view returns (address[] memory) {
         uint256 roleMemberCount = getRoleMemberCount(AUTHORIZED_CONTRACT_ROLE);
         address[] memory contracts = new address[](roleMemberCount);
@@ -104,7 +150,10 @@ contract AccessManager is AccessControl, AccessControlEnumerable {
         return contracts;
     }
 
-    // Get All Admins
+    /**
+    * @dev To get All Admins.
+    * @return The addresses with the ADMIN_ROLE.
+    */
     function getCurrentAdmins() public view returns (address[] memory) {
         uint256 roleMemberCount = getRoleMemberCount(ADMIN_ROLE);
         address[] memory admins = new address[](roleMemberCount);
@@ -115,7 +164,10 @@ contract AccessManager is AccessControl, AccessControlEnumerable {
         return admins;
     }
 
-    // Get All Company Users
+    /**
+    * @dev To get All Company Users.
+    * @return The addresses with the COMPANY_USER_ROLE.
+    */
     function getCurrentCompanyUsers(uint256 query) public view returns (address[] memory) {
         uint256 roleMemberCount = getRoleMemberCount(COMPANY_USER_ROLE);
         if (roleMemberCount < query) query = roleMemberCount;
@@ -127,7 +179,10 @@ contract AccessManager is AccessControl, AccessControlEnumerable {
         return companyUsers;
     }
 
-    // Get All Consumers
+    /**
+    * @dev To get All Consumers.
+    * @return The addresses with the CONSUMER_ROLE.
+    */
     function getCurrentConsumers(uint256 query) public view returns (address[] memory) {
         uint256 roleMemberCount = getRoleMemberCount(CONSUMER_ROLE);
         if (roleMemberCount < query) query = roleMemberCount;
@@ -140,6 +195,10 @@ contract AccessManager is AccessControl, AccessControlEnumerable {
     }
 
     /// Necessary Overrides:
+    /**
+    * @dev To grant a custom role.
+    * @return success status.
+    */
     function _grantRole(bytes32 role, address account)
     internal
     override(AccessControl, AccessControlEnumerable)
@@ -148,6 +207,10 @@ contract AccessManager is AccessControl, AccessControlEnumerable {
         return super._grantRole(role, account);
     }
 
+    /**
+    * @dev To revoke a custom role.
+    * @return success status.
+    */
     function _revokeRole(bytes32 role, address account)
     internal
     override(AccessControl, AccessControlEnumerable)

@@ -8,7 +8,11 @@ import { ERC721URIStorage } from "@openzeppelin/contracts/token/ERC721/extension
 import { AccessManager } from "./AccessManager.sol";
 import { Errors } from "./Errors.sol";
 
-/// @custom:security-contact @captainunknown7@gmail.com
+/**
+* @title An ERC721 collection of actors.
+* @dev A soul-bound NFT for identity management.
+* @custom:security-contact @captainunknown7@gmail.com
+*/
 contract Actor is ERC721, ERC721Enumerable, ERC721URIStorage {
     uint256 private _nextActorId;
     AccessManager public acl;
@@ -20,6 +24,9 @@ contract Actor is ERC721, ERC721Enumerable, ERC721URIStorage {
         _;
     }
 
+    /**
+    * @dev Sets the ACL and determines the hash AUTHORIZED_CONTRACT_ROLE.
+    */
     constructor(address aclAddress, string memory actorType, string memory prefix) ERC721(actorType, prefix) {
         acl = AccessManager(aclAddress);
         AUTHORIZED_CONTRACT_ROLE = acl.AUTHORIZED_CONTRACT_ROLE();
@@ -29,6 +36,13 @@ contract Actor is ERC721, ERC721Enumerable, ERC721URIStorage {
         return "ipfs://";
     }
 
+    /**
+    * @dev To register a new actor of any kind.
+    * Can only by called an external contract which would be `ActorsManager`.
+    * @param The receiver of the ID.
+    * @param The hash of the ID.
+    * @return The registered Actor ID.
+    */
     function registerActor(address account, string calldata hash)
     external
     onlyAuthorizedContract
@@ -41,6 +55,12 @@ contract Actor is ERC721, ERC721Enumerable, ERC721URIStorage {
         return actorId;
     }
 
+    /**
+    * @dev To update an actor of any kind.
+    * Can only by called an external contract which would be `ActorsManager`.
+    * @param Actor ID to update.
+    * @param The new hash.
+    */
     function updateActor(uint256 actorId, string memory newHash)
     external
     onlyAuthorizedContract
@@ -48,14 +68,23 @@ contract Actor is ERC721, ERC721Enumerable, ERC721URIStorage {
         _setTokenURI(actorId, newHash);
     }
 
+    /**
+    * @dev Reverts with `SoulBoundTransferNotAllowed`.
+    */
     function transferFrom(address /*from*/, address /*to*/, uint256 /*tokenId*/) public pure override(IERC721, ERC721) {
         revert Errors.SoulBoundTransferNotAllowed();
     }
 
+    /**
+    * @dev Reverts with `SoulBoundTransferNotAllowed`.
+    */
     function safeTransferFrom(address /*from*/, address /*to*/, uint256 /*tokenId*/, bytes memory /*data*/) public pure override(IERC721, ERC721) {
         revert Errors.SoulBoundTransferNotAllowed();
     }
 
+    /**
+    * @return Whether the id has been issued or not.
+    */
     function idExists(uint256 id) public view returns(bool) {
         return id < totalSupply();
     }

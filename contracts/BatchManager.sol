@@ -10,7 +10,11 @@ import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableS
 import { FunctionsClient } from "@chainlink/contracts@1.2.0/src/v0.8/functions/v1_0_0/FunctionsClient.sol";
 import { FunctionsRequest } from "@chainlink/contracts@1.2.0/src/v0.8/functions/v1_0_0/libraries/FunctionsRequest.sol";
 
-/// @custom:security-contact @captainunknown7@gmail.com
+/**
+* @title Batch Aggregator.
+* @dev Maintains the necessary on-chain batch state, keeping in sync with the underlying collection.
+* @custom:security-contact @captainunknown7@gmail.com
+*/
 contract BatchManager is FunctionsClient {
     using FunctionsRequest for FunctionsRequest.Request;
     using EnumerableSet for EnumerableSet.UintSet;
@@ -88,6 +92,10 @@ contract BatchManager is FunctionsClient {
     event BatchCreated(uint256 indexed batchId, string hash, uint256 timestamp);
     event BatchStatusUpdated(uint256 indexed batchId, BatchState state, string hash, uint256 timestamp);
 
+    /**
+    * @dev Sets the ACL and determines the hash AUTHORIZED_CONTRACT_ROLE.
+    * Along with the Chainlink Configuration & finally the address of the `SupplyChain` contract.
+    */
     constructor(address aclAddress, address _supplyChainContract, bytes32 _donId, address _donRouter, uint64 _donSubscriptionId)
         FunctionsClient(_donRouter)
     {
@@ -103,6 +111,12 @@ contract BatchManager is FunctionsClient {
         supplyChainContract = _supplyChainContract;
     }
 
+    /**
+    * @dev Creates the batch & updates the on-chain state if the metadata validation succeeds.
+    * @param The ID of the farmer who created the batch.
+    * @param The hash of the metadata of the batch.
+    * @param Callback selector, which calls a post validation function in SupplyChain to perform creation.
+    */
     function createBatch(uint256 _farmerId, string calldata hash, bytes4 _callbackFunction)
         external
         onlyAuthorizedContract
@@ -132,6 +146,12 @@ contract BatchManager is FunctionsClient {
         });
     }
 
+    /**
+    * @dev Updates the metadata of the batch if the metadata validation succeeds.
+    * @param The new updated batch info itself.
+    * @param The hash of the new dynamically updated metadata.
+    * @param Callback selector, which calls a post validation function in SupplyChain to perform update.
+    */
     function updateBatch(BatchInfo calldata _batch, string calldata hash, bytes4 _callbackFunction)
         external
         onlyAuthorizedContract
@@ -147,6 +167,11 @@ contract BatchManager is FunctionsClient {
         });
     }
 
+    /**
+    * @dev To retrieve the batch URI.
+    * @param The ID of the batch.
+    * @return The hash of the batch.
+    */
     function getBatchURI(uint256 batchId)
         public
         view
@@ -155,6 +180,12 @@ contract BatchManager is FunctionsClient {
         return batches.tokenURI(batchId);
     }
 
+    /**
+    * @dev To retrieve the batch URIs in a chunk, chunk size cannot exceed 100.
+    * @param The starting index (ID) of the batches.
+    * @param Total request size.
+    * @return The hashes of the batches.
+    */
     function getBatchURIsInBatch(uint256 cursor, uint256 pageSize)
         public
         view
@@ -176,7 +207,11 @@ contract BatchManager is FunctionsClient {
         return batchURIs;
     }
 
-    // Chainlink Metadata Validation Function
+    /**
+    * @dev An internal function to be called to send a validation request.
+    * @param The hash of the metadata to be validated.
+    * @return The DON Function request ID.
+    */
     function validateMetadata(string calldata hash) internal returns(bytes32) {
         FunctionsRequest.Request memory req;
         req.initializeRequestForInlineJavaScript(validationSource);
@@ -191,10 +226,16 @@ contract BatchManager is FunctionsClient {
         );
     }
 
+    /**
+    * @dev An internal function to be called by the donRouter.
+    * @param The validation request ID.
+    * @param The response from the DON Function.
+    * @return The error from the DON Function (if any).
+    */
     function fulfillRequest(bytes32 requestId, bytes memory response, bytes memory err) internal override {
-        // TODO: Request Id Check
-        // if (s_lastRequestId != requestId) revert UnexpectedRequestID(requestId);
         RequestInfo memory info = lastValidationRequest[requestId];
+        if (bytes(info.hash).length == 0) revert Errors.UnexpectedRequestID(requestId);
+        
         uint256 _batchId = info.batchId;
         string memory hash = info.hash;
 
@@ -223,14 +264,26 @@ contract BatchManager is FunctionsClient {
         if(!success) revert Errors.FulfillmentFailed();
     }
 
+    /**
+    * @dev A guarded function to change the `SupplyChain` contract address.
+    * @param The new `SupplyChain` contract address.
+    */
     function setSupplyChainAddress(address _supplyChainAddress) public onlyAdminRole {
         supplyChainContract = _supplyChainAddress;
     }
 
+    /**
+    * @dev A guarded function to update the on-chain batch state, to be called by the `SupplyChain` contract.
+    * @param The batch ID to set the batch for.
+    * @param The new batch info itself.
+    */
     function setBatch(uint256 _batchId, BatchInfo calldata batch) external onlyAuthorizedContract {
         batchInfoForId[_batchId] = batch;
     }
 
+    /**
+    * @dev To get the actors involved in a particular batch, a read-only external function.
+    */
     function getUpdatedBatchActors(uint256 _batchId)
         external
         view
@@ -256,6 +309,9 @@ contract BatchManager is FunctionsClient {
         );
     }
 
+    /**
+    * @dev To get the getBatchFarmerId of a particular batch, a read-only external function.
+    */
     function getBatchFarmerId(uint256 _batchId)
         external
         view

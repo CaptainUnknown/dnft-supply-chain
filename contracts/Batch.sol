@@ -8,7 +8,11 @@ import { ERC721URIStorage } from "@openzeppelin/contracts/token/ERC721/extension
 import { AccessManager } from "./AccessManager.sol";
 import { Errors } from "./Errors.sol";
 
-/// @custom:security-contact @captainunknown7@gmail.com
+/**
+* @title An ERC721 collection of batches.
+* @dev A soul-bound NFT to identify batches as dNFTs held by the `SupplyChain` contract.
+* @custom:security-contact @captainunknown7@gmail.com
+*/
 contract Batch is ERC721, ERC721Enumerable, ERC721URIStorage {
     uint256 private _batchId;
     AccessManager public acl;
@@ -20,6 +24,9 @@ contract Batch is ERC721, ERC721Enumerable, ERC721URIStorage {
         _;
     }
 
+    /**
+    * @dev Sets the ACL and determines the hash AUTHORIZED_CONTRACT_ROLE.
+    */
     constructor(address aclAddress, string memory batchName, string memory batchSymbol) ERC721(batchName, batchSymbol) {
         acl = AccessManager(aclAddress);
         AUTHORIZED_CONTRACT_ROLE = acl.AUTHORIZED_CONTRACT_ROLE();
@@ -29,6 +36,13 @@ contract Batch is ERC721, ERC721Enumerable, ERC721URIStorage {
         return "ipfs://";
     }
 
+    /**
+    * @dev To create a new batch with the provided hash.
+    * Can only by called an external contract which would be `BatchManager`.
+    * @param The receiver of the batch. It'd be `SupplyChain` when called as a registrar.
+    * @param The hash of the Batch.
+    * @return The registered Batch ID.
+    */
     function createBatch(address account, string calldata hash)
     external
     onlyAuthorizedContract
@@ -40,6 +54,12 @@ contract Batch is ERC721, ERC721Enumerable, ERC721URIStorage {
         return batchId;
     }
 
+    /**
+    * @dev To update batch hash.
+    * Can only by called an external contract which would be `BatchManager`.
+    * @param Batch ID to update.
+    * @param The new hash to be updated with.
+    */
     function updateBatch(uint256 batchId, string memory newHash)
     external
     onlyAuthorizedContract
@@ -47,14 +67,23 @@ contract Batch is ERC721, ERC721Enumerable, ERC721URIStorage {
         _setTokenURI(batchId, newHash);
     }
 
+    /**
+    * @dev Reverts with `SoulBoundTransferNotAllowed`.
+    */
     function transferFrom(address /*from*/, address /*to*/, uint256 /*tokenId*/) public pure override(IERC721, ERC721) {
         revert Errors.SoulBoundTransferNotAllowed();
     }
 
+    /**
+    * @dev Reverts with `SoulBoundTransferNotAllowed`.
+    */
     function safeTransferFrom(address /*from*/, address /*to*/, uint256 /*tokenId*/, bytes memory /*data*/) public pure override(IERC721, ERC721) {
         revert Errors.SoulBoundTransferNotAllowed();
     }
 
+    /**
+    * @return Whether the id has been issued or not.
+    */
     function idExists(uint256 id) public view returns(bool) {
         return id < totalSupply();
     }

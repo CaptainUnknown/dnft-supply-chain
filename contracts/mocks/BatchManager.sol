@@ -175,8 +175,6 @@ contract BatchManager {
     }
 
     function fulfillRequest(uint256 requestId, bytes memory response, bytes memory err) public onlyAuthorizedContract {
-        // TODO: Request Id Check
-        // if (s_lastRequestId != requestId) revert UnexpectedRequestID(requestId);
         RequestInfo memory info = lastValidationRequest[requestId];
         uint256 _batchId = info.batchId;
         string memory hash = info.hash;
