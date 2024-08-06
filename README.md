@@ -1,6 +1,8 @@
 # Dynamic NFT Based Supply Chain
 ![Hardhat CI](https://github.com/CaptainUnknown/dnft-supply-chain/actions/workflows/ci.yml/badge.svg)
 
+An innovative blockchain-based traceability tool designed for the agrifood industry. It certifies the quality and origin of products by tracking each step of the production process, from planting to the distribution, using blockchain technology.
+
 ## Introduction
 These smart contracts are designed to manage and track the lifecycle of produced batches in the supply chain & the actors involved in each step. All actors are assigned a soul-bound unique NFT that should be generated based on their compliance and necessary checks. Similarly, each batch is represented by a unique dNFT tied to the necessary on-chain data held in `BatchManager` contract.
 
@@ -31,4 +33,4 @@ Additionally, a Chainlink Oracle node needs to be deployed to handle metadata va
 ![activityDiagram](https://github.com/user-attachments/assets/a9a753fa-ecfc-4d02-8d5c-97e11503bdf3)
 
 ## Class Diagram
-<img width="2866" alt="dNFT Supply Chain Class Diagram" src="https://github.com/user-attachments/assets/5f89bb4d-9443-4dbb-ac9f-59f84a4d1837">
+<img width="2900" alt="dNFT Supply Chain Class Diagram" src="https://github.com/user-attachments/assets/374c84f4-4d56-449d-973a-e7e0e959f8f3">
