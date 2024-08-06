@@ -28,7 +28,7 @@ Additionally, a Chainlink Oracle node needs to be deployed to handle metadata va
 5. Any changes on the MES systems can trigger a service that invokes the `updateBatchState()`. This will tie the dNFT representing the batch to the actor involved in each step.
 
 ## Activity Diagram
-![Activity Diagram](https://github.com/user-attachments/assets/14eecfe3-9cf1-4ad7-a63c-dde82d5d1d6c)
+![activityDiagram](https://github.com/user-attachments/assets/a9a753fa-ecfc-4d02-8d5c-97e11503bdf3)
 
 ## Class Diagram
-<img width="2900" alt="dNFT Supply Chain Class Diagram" src="https://github.com/user-attachments/assets/7aa4eb2f-fd3a-4390-9261-55697703d593">
+<img width="2866" alt="dNFT Supply Chain Class Diagram" src="https://github.com/user-attachments/assets/5f89bb4d-9443-4dbb-ac9f-59f84a4d1837">
