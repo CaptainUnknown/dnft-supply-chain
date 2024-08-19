@@ -39,8 +39,8 @@ contract Actor is ERC721, ERC721Enumerable, ERC721URIStorage {
     /**
     * @dev To register a new actor of any kind.
     * Can only by called an external contract which would be `ActorsManager`.
-    * @param The receiver of the ID.
-    * @param The hash of the ID.
+    * @param account - The receiver of the ID.
+    * @param hash - The hash of the ID.
     * @return The registered Actor ID.
     */
     function registerActor(address account, string calldata hash)
@@ -58,8 +58,8 @@ contract Actor is ERC721, ERC721Enumerable, ERC721URIStorage {
     /**
     * @dev To update an actor of any kind.
     * Can only by called an external contract which would be `ActorsManager`.
-    * @param Actor ID to update.
-    * @param The new hash.
+    * @param actorId - Actor ID to update.
+    * @param newHash - The new hash.
     */
     function updateActor(uint256 actorId, string memory newHash)
     external

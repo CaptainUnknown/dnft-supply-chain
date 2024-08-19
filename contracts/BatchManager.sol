@@ -97,7 +97,7 @@ contract BatchManager is FunctionsClient {
     * Along with the Chainlink Configuration & finally the address of the `SupplyChain` contract.
     */
     constructor(address aclAddress, address _supplyChainContract, bytes32 _donId, address _donRouter, uint64 _donSubscriptionId)
-        FunctionsClient(_donRouter)
+    FunctionsClient(_donRouter)
     {
         batches = new Batch(aclAddress, "Batch", "B");
         donId = _donId;
@@ -113,13 +113,13 @@ contract BatchManager is FunctionsClient {
 
     /**
     * @dev Creates the batch & updates the on-chain state if the metadata validation succeeds.
-    * @param The ID of the farmer who created the batch.
-    * @param The hash of the metadata of the batch.
-    * @param Callback selector, which calls a post validation function in SupplyChain to perform creation.
+    * @param _farmerId - The ID of the farmer who created the batch.
+    * @param hash - The hash of the metadata of the batch.
+    * @param _callbackFunction - Callback selector, which calls a post validation function in SupplyChain to perform creation.
     */
     function createBatch(uint256 _farmerId, string calldata hash, bytes4 _callbackFunction)
-        external
-        onlyAuthorizedContract
+    external
+    onlyAuthorizedContract
     {
         uint256[] memory ids;
         BatchInfo memory _batch = BatchInfo({
@@ -148,13 +148,13 @@ contract BatchManager is FunctionsClient {
 
     /**
     * @dev Updates the metadata of the batch if the metadata validation succeeds.
-    * @param The new updated batch info itself.
-    * @param The hash of the new dynamically updated metadata.
-    * @param Callback selector, which calls a post validation function in SupplyChain to perform update.
+    * @param _batch - The new updated batch info itself.
+    * @param hash - The hash of the new dynamically updated metadata.
+    * @param _callbackFunction - Callback selector, which calls a post validation function in SupplyChain to perform update.
     */
     function updateBatch(BatchInfo calldata _batch, string calldata hash, bytes4 _callbackFunction)
-        external
-        onlyAuthorizedContract
+    external
+    onlyAuthorizedContract
     {
         if (!(batches.idExists(_batch.batchId))) revert Errors.InvalidTokenId();
         lastValidationRequest[validateMetadata(hash)] = RequestInfo({
@@ -169,27 +169,27 @@ contract BatchManager is FunctionsClient {
 
     /**
     * @dev To retrieve the batch URI.
-    * @param The ID of the batch.
+    * @param batchId - The ID of the batch.
     * @return The hash of the batch.
     */
     function getBatchURI(uint256 batchId)
-        public
-        view
-        returns(string memory)
+    public
+    view
+    returns(string memory)
     {
         return batches.tokenURI(batchId);
     }
 
     /**
     * @dev To retrieve the batch URIs in a chunk, chunk size cannot exceed 100.
-    * @param The starting index (ID) of the batches.
-    * @param Total request size.
+    * @param cursor - The starting index (ID) of the batches.
+    * @param pageSize - Total request size.
     * @return The hashes of the batches.
     */
     function getBatchURIsInBatch(uint256 cursor, uint256 pageSize)
-        public
-        view
-        returns (string[] memory)
+    public
+    view
+    returns (string[] memory)
     {
         Batch batch = batches;
         if (!(pageSize < 101)) revert Errors.OutOfBounds(pageSize, 100);
@@ -209,7 +209,7 @@ contract BatchManager is FunctionsClient {
 
     /**
     * @dev An internal function to be called to send a validation request.
-    * @param The hash of the metadata to be validated.
+    * @param hash - The hash of the metadata to be validated.
     * @return The DON Function request ID.
     */
     function validateMetadata(string calldata hash) internal returns(bytes32) {
@@ -228,14 +228,14 @@ contract BatchManager is FunctionsClient {
 
     /**
     * @dev An internal function to be called by the donRouter.
-    * @param The validation request ID.
-    * @param The response from the DON Function.
-    * @return The error from the DON Function (if any).
+    * @param requestId - The validation request ID.
+    * @param response - The response from the DON Function.
+    * @param err - The error from the DON Function (if any).
     */
     function fulfillRequest(bytes32 requestId, bytes memory response, bytes memory err) internal override {
         RequestInfo memory info = lastValidationRequest[requestId];
-        if (bytes(info.hash).length == 0) revert Errors.UnexpectedRequestID(requestId);
-        
+        if (bytes(info.hash).length == 0) revert Errors.UnexpectedRequestID();
+
         uint256 _batchId = info.batchId;
         string memory hash = info.hash;
 
@@ -266,7 +266,7 @@ contract BatchManager is FunctionsClient {
 
     /**
     * @dev A guarded function to change the `SupplyChain` contract address.
-    * @param The new `SupplyChain` contract address.
+    * @param _supplyChainAddress - The new `SupplyChain` contract address.
     */
     function setSupplyChainAddress(address _supplyChainAddress) public onlyAdminRole {
         supplyChainContract = _supplyChainAddress;
@@ -274,8 +274,8 @@ contract BatchManager is FunctionsClient {
 
     /**
     * @dev A guarded function to update the on-chain batch state, to be called by the `SupplyChain` contract.
-    * @param The batch ID to set the batch for.
-    * @param The new batch info itself.
+    * @param _batchId - The batch ID to set the batch for.
+    * @param batch - The new batch info itself.
     */
     function setBatch(uint256 _batchId, BatchInfo calldata batch) external onlyAuthorizedContract {
         batchInfoForId[_batchId] = batch;
@@ -285,17 +285,17 @@ contract BatchManager is FunctionsClient {
     * @dev To get the actors involved in a particular batch, a read-only external function.
     */
     function getUpdatedBatchActors(uint256 _batchId)
-        external
-        view
-        returns (
-            BatchState,
-            uint256,
-            uint256,
-            uint128,
-            uint128,
-            uint256[] memory,
-            uint256[] memory
-        )
+    external
+    view
+    returns (
+        BatchState,
+        uint256,
+        uint256,
+        uint128,
+        uint128,
+        uint256[] memory,
+        uint256[] memory
+    )
     {
         BatchInfo storage batch = batchInfoForId[_batchId];
         return (
@@ -313,9 +313,9 @@ contract BatchManager is FunctionsClient {
     * @dev To get the getBatchFarmerId of a particular batch, a read-only external function.
     */
     function getBatchFarmerId(uint256 _batchId)
-        external
-        view
-        returns (uint256)
+    external
+    view
+    returns (uint256)
     {
         return batchInfoForId[_batchId].farmerId;
     }

@@ -39,8 +39,8 @@ contract Batch is ERC721, ERC721Enumerable, ERC721URIStorage {
     /**
     * @dev To create a new batch with the provided hash.
     * Can only by called an external contract which would be `BatchManager`.
-    * @param The receiver of the batch. It'd be `SupplyChain` when called as a registrar.
-    * @param The hash of the Batch.
+    * @param account - The receiver of the batch. It'd be `SupplyChain` when called as a registrar.
+    * @param hash - The hash of the Batch.
     * @return The registered Batch ID.
     */
     function createBatch(address account, string calldata hash)
@@ -57,8 +57,8 @@ contract Batch is ERC721, ERC721Enumerable, ERC721URIStorage {
     /**
     * @dev To update batch hash.
     * Can only by called an external contract which would be `BatchManager`.
-    * @param Batch ID to update.
-    * @param The new hash to be updated with.
+    * @param batchId - Batch ID to update.
+    * @param newHash - The new hash to update the old hash with.
     */
     function updateBatch(uint256 batchId, string memory newHash)
     external
