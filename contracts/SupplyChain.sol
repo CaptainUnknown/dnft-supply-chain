@@ -8,7 +8,6 @@ import { BatchManager } from "./BatchManager.sol";
 import { AccessManager } from "./AccessManager.sol";
 import { BatchValidationMiddleware as Validate } from "./BatchValidationMiddleware.sol";
 
-import { ActorsManager } from "./ActorsManager.sol";
 import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 /**
@@ -19,7 +18,6 @@ contract SupplyChain is BatchManager {
     using EnumerableSet for EnumerableSet.UintSet;
     AccessManager public acl;
     bytes32 immutable COMPANY_USER_ROLE;
-    ActorsManager public actorsManager;
 
     modifier onlyCompanyUser() {
         if (!acl.hasRole(COMPANY_USER_ROLE, msg.sender))
@@ -53,12 +51,11 @@ contract SupplyChain is BatchManager {
     * @dev Sets the ACL and determines the hash AUTHORIZED_CONTRACT_ROLE.
     * And handles the deployment of the `BatchManager` contract.
     */
-    constructor(address aclAddress, address _actorsManager, bytes32 _donId, address _donRouter, uint64 _donSubscriptionId)
+    constructor(address aclAddress, bytes32 _donId, address _donRouter, uint64 _donSubscriptionId)
     BatchManager(_donId, _donRouter, _donSubscriptionId)
     {
         acl = AccessManager(aclAddress);
         COMPANY_USER_ROLE = acl.COMPANY_USER_ROLE();
-        actorsManager = ActorsManager(_actorsManager);
     }
 
     /**
@@ -261,7 +258,7 @@ contract SupplyChain is BatchManager {
     * @return The Distribution Event IDs the distributor was involved in.
     */
     function getDistributionEventIdsForDistributor(uint256 distributorId)
-    public view returns (uint256[] memory)
+        public view returns (uint256[] memory)
     {
         return distributors[distributorId].distributionEventIds.values();
     }
@@ -272,7 +269,7 @@ contract SupplyChain is BatchManager {
     * @return The Retail Event IDs the retailer was involved in.
     */
     function getRetailEventIdsForRetailer(uint256 retailerId)
-    public view returns (uint256[] memory)
+        public view returns (uint256[] memory)
     {
         return retailers[retailerId].retailEventIds.values();
     }
@@ -283,7 +280,7 @@ contract SupplyChain is BatchManager {
     * @return The Distributors IDs that were involved in the batch.
     */
     function getAllDistributorsForBatch(uint256 batchId)
-    public view returns (uint256[] memory)
+        public view returns (uint256[] memory)
     {
         return distributorsIdsForBatchId[batchId].values();
     }
@@ -294,7 +291,7 @@ contract SupplyChain is BatchManager {
     * @return The Retailers IDs that were involved in the batch.
     */
     function getAllRetailersForBatch(uint256 batchId)
-    public view returns (uint256[] memory)
+        public view returns (uint256[] memory)
     {
         return retailersIdsForBatchId[batchId].values();
     }

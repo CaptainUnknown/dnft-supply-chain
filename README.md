@@ -34,7 +34,7 @@ Additionally, a Chainlink Oracle node needs to be deployed to handle metadata va
   * `assignBatchToRetailer()`
 
 ## Activity Diagram
-![Activty Diagram](https://github.com/user-attachments/assets/b092117e-f34c-4ee3-9363-61e06dd5733a)
+![Activity Diagram](https://github.com/user-attachments/assets/3e4c0159-b62a-4d2e-bbbe-250c8d5fe1bd)
 
 ## Class Diagram
-<img width="3566" alt="dNFT Supply Chain Class Diagram" src="https://github.com/user-attachments/assets/1349fdf0-3816-494e-8b42-497bdc1f3dbc">
+<img width="3566" alt="dNFT Supply Chain Class Diagram" src="https://github.com/user-attachments/assets/92c5e204-6589-43bf-83a8-30370f6bd006">

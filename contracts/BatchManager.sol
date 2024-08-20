@@ -45,11 +45,11 @@ abstract contract BatchManager is Batch, FunctionsClient {
     mapping(bytes32 => RequestInfo) private lastValidationRequest;
     // TODO: Desirably make config updateable
     string validationSource = "const hash = args[0];"
-    "const res = await Functions.makeHttpRequest({ url: `https://trustifyscm.com/api/validate-batch-meta?hash=${hash}`,"
-    "timeout: 9000 });"
-    "if (res.error || res.status !== 200) throw Error('Request Failed');"
-    "const { data } = res;"
-    "return Functions.encodeUint256(data.isValid);";
+        "const res = await Functions.makeHttpRequest({ url: `https://trustifyscm.com/api/validate-batch-meta?hash=${hash}`,"
+        "timeout: 9000 });"
+        "if (res.error || res.status !== 200) throw Error('Request Failed');"
+        "const { data } = res;"
+        "return Functions.encodeUint256(data.isValid);";
     address donRouter;
     bytes32 donId;
     uint64 donSubscriptionId;
