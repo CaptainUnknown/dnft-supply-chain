@@ -15,22 +15,12 @@ import { Errors } from "./Errors.sol";
 */
 contract Batch is ERC721, ERC721Enumerable, ERC721URIStorage {
     uint256 private _batchId;
-    AccessManager public acl;
-    bytes32 immutable AUTHORIZED_CONTRACT_ROLE;
-
-    modifier onlyAuthorizedContract() {
-        if (!acl.hasRole(AUTHORIZED_CONTRACT_ROLE, msg.sender))
-            revert Errors.UnAuthorized("AUTHORIZED_CONTRACT_ROLE");
-        _;
-    }
 
     /**
-    * @dev Sets the ACL and determines the hash AUTHORIZED_CONTRACT_ROLE.
+    * @dev Initializes the batch collection.
     */
-    constructor(address aclAddress, string memory batchName, string memory batchSymbol) ERC721(batchName, batchSymbol) {
-        acl = AccessManager(aclAddress);
-        AUTHORIZED_CONTRACT_ROLE = acl.AUTHORIZED_CONTRACT_ROLE();
-    }
+    constructor(string memory batchName, string memory batchSymbol)
+        ERC721(batchName, batchSymbol) {}
 
     function _baseURI() internal pure override returns (string memory) {
         return "ipfs://";
@@ -43,11 +33,7 @@ contract Batch is ERC721, ERC721Enumerable, ERC721URIStorage {
     * @param hash - The hash of the Batch.
     * @return The registered Batch ID.
     */
-    function createBatch(address account, string calldata hash)
-    external
-    onlyAuthorizedContract
-    returns (uint256)
-    {
+    function _createBatch(address account, string memory hash) internal returns (uint256) {
         uint256 batchId = _batchId++;
         _safeMint(account, batchId);
         _setTokenURI(batchId, hash);
@@ -60,10 +46,7 @@ contract Batch is ERC721, ERC721Enumerable, ERC721URIStorage {
     * @param batchId - Batch ID to update.
     * @param newHash - The new hash to update the old hash with.
     */
-    function updateBatch(uint256 batchId, string memory newHash)
-    external
-    onlyAuthorizedContract
-    {
+    function _updateBatch(uint256 batchId, string memory newHash) internal {
         _setTokenURI(batchId, newHash);
     }
 
@@ -90,35 +73,35 @@ contract Batch is ERC721, ERC721Enumerable, ERC721URIStorage {
 
     // Necessary Overrides
     function _update(address to, uint256 tokenId, address auth)
-    internal
-    override(ERC721, ERC721Enumerable)
-    returns (address)
+        internal
+        override(ERC721, ERC721Enumerable)
+        returns (address)
     {
         return super._update(to, tokenId, auth);
     }
 
     function _increaseBalance(address account, uint128 value)
-    internal
-    override(ERC721, ERC721Enumerable)
+        internal
+        override(ERC721, ERC721Enumerable)
     {
         super._increaseBalance(account, value);
     }
 
     function tokenURI(uint256 tokenId)
-    public
-    view
-    override(ERC721, ERC721URIStorage)
-    returns (string memory)
+        public
+        view
+        override(ERC721, ERC721URIStorage)
+        returns (string memory)
     {
         return super.tokenURI(tokenId);
     }
 
     function supportsInterface(bytes4 interfaceId)
-    public
-    view
-    virtual
-    override(ERC721, ERC721Enumerable, ERC721URIStorage)
-    returns (bool)
+        public
+        view
+        virtual
+        override(ERC721, ERC721Enumerable, ERC721URIStorage)
+        returns (bool)
     {
         return super.supportsInterface(interfaceId);
     }

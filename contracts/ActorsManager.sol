@@ -2,9 +2,9 @@
 pragma solidity ^0.8.20;
 
 import { Actor } from "./Actor.sol";
-import { AccessManager } from "./AccessManager.sol";
 import { String } from "./String.sol";
 import { Errors } from "./Errors.sol";
+import { AccessManager } from "./AccessManager.sol";
 
 import { FunctionsClient } from "@chainlink/contracts@1.2.0/src/v0.8/functions/v1_0_0/FunctionsClient.sol";
 import { FunctionsRequest } from "@chainlink/contracts@1.2.0/src/v0.8/functions/v1_0_0/libraries/FunctionsRequest.sol";
@@ -46,8 +46,7 @@ contract ActorsManager is FunctionsClient {
     }
     mapping(bytes32 => RequestInfo) private lastValidationRequest;
 
-    string validationSource =
-        "const actorType = args[0];"
+    string validationSource = "const actorType = args[0];"
         "const hash = args[1];"
         "const res = await Functions.makeHttpRequest("
         "{ url: `https://trustifyscm.com/api/validate-actor-meta?type=${actorType}&hash=${hash}`,"
@@ -62,7 +61,7 @@ contract ActorsManager is FunctionsClient {
 
     event ActorRegistered(uint8 indexed actorType, uint256 indexed actorId, address indexed account, string hash);
     event ActorUpdated(uint8 indexed actorType, uint256 indexed actorId, string newHash);
-    event ValidationFailed(uint8 indexed actorType, uint256 indexed actorId, string hash, bytes error);
+    event ActorValidationFailed(uint8 indexed actorType, uint256 indexed actorId, string hash, bytes error);
 
     modifier onlyValidActorType(uint8 actorType) {
         if (!(actorType < ACTOR_TYPE_COUNT)) revert Errors.InvalidActorType(actorType, ACTOR_TYPE_COUNT);
@@ -74,7 +73,7 @@ contract ActorsManager is FunctionsClient {
     * Along with the Chainlink Configuration.
     */
     constructor(address aclAddress, bytes32 _donId, address _donRouter, uint64 _donSubscriptionId)
-    FunctionsClient(_donRouter)
+        FunctionsClient(_donRouter)
     {
         actors[0] = new Actor(aclAddress, "Farmer", "FG");
         actors[1] = new Actor(aclAddress, "Processor", "PR");
@@ -98,9 +97,9 @@ contract ActorsManager is FunctionsClient {
     * @param hash - The hash of the metadata of the actor.
     */
     function registerActor(uint8 actorType, address account, string calldata hash)
-    public
-    onlyValidActorType(actorType)
-    onlyAuthorizedContract
+        public
+        onlyValidActorType(actorType)
+        onlyAuthorizedContract
     {
         lastValidationRequest[validateMetadata(actorType, hash)] = RequestInfo({
             actorId: 0,
@@ -118,9 +117,9 @@ contract ActorsManager is FunctionsClient {
     * @param hash - The hash of the actor.
     */
     function updateActor(uint8 actorType, uint256 actorId, string calldata hash)
-    public
-    onlyValidActorType(actorType)
-    onlyAuthorizedContract
+        public
+        onlyValidActorType(actorType)
+        onlyAuthorizedContract
     {
         lastValidationRequest[validateMetadata(actorType, hash)] = RequestInfo({
             actorId: actorId,
@@ -138,10 +137,10 @@ contract ActorsManager is FunctionsClient {
     * @return The hash of the batch.
     */
     function getActorURI(uint8 actorType, uint256 actorId)
-    public
-    view
-    onlyValidActorType(actorType)
-    returns(string memory)
+        public
+        view
+        onlyValidActorType(actorType)
+        returns(string memory)
     {
         return actors[actorType].tokenURI(actorId);
     }
@@ -154,10 +153,10 @@ contract ActorsManager is FunctionsClient {
     * @return The hashes of the actors.
     */
     function getActorsURIsInBatch(uint8 actorType, uint256 cursor, uint256 pageSize)
-    public
-    view
-    onlyValidActorType(actorType)
-    returns (string[] memory)
+        public
+        view
+        onlyValidActorType(actorType)
+        returns (string[] memory)
     {
         if (!(pageSize < 101)) revert Errors.OutOfBounds(pageSize, 100);
         Actor actorContract = actors[actorType];
@@ -211,10 +210,10 @@ contract ActorsManager is FunctionsClient {
         string memory hash = info.hash;
 
         if (err.length > 0) {
-            emit ValidationFailed(actorType, actorId, hash, err);
+            emit ActorValidationFailed(actorType, actorId, hash, err);
             return;
         } else if (!String.strcmp(string(response), "true")) {
-            emit ValidationFailed(actorType, actorId, hash, response);
+            emit ActorValidationFailed(actorType, actorId, hash, response);
             return;
         }
 
